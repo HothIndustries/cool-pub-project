@@ -116,7 +116,7 @@ class TestFetchQuestions:
             return self
 
         def __exit__(self, exc_type, exc, tb):
-            return False
+            return None
 
         def read(self):
             return json.dumps(self.payload).encode("utf-8")
