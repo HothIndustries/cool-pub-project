@@ -156,6 +156,33 @@ class TestFetchQuestions:
             with pytest.raises(ValueError, match="must be strings"):
                 fetch_questions("https://example.com/questions.json")
 
+    def test_raises_for_missing_required_keys(self):
+        payload = [
+            {
+                "category": "Science",
+                "question": "What is H2O?",
+                "choices": ["A) Salt", "B) Water", "C) Gold", "D) Iron"],
+                "answer": "B",
+            }
+        ]
+        with patch("pub_quiz.urllib.request.urlopen", return_value=self.MockResponse(payload)):
+            with pytest.raises(ValueError, match="required keys"):
+                fetch_questions("https://example.com/questions.json")
+
+    def test_raises_for_invalid_answer_value(self):
+        payload = [
+            {
+                "category": "Science",
+                "question": "What is H2O?",
+                "choices": ["A) Salt", "B) Water", "C) Gold", "D) Iron"],
+                "answer": "Z",
+                "fun_fact": "Water covers around 71% of Earth's surface.",
+            }
+        ]
+        with patch("pub_quiz.urllib.request.urlopen", return_value=self.MockResponse(payload)):
+            with pytest.raises(ValueError, match="must be A, B, C, or D"):
+                fetch_questions("https://example.com/questions.json")
+
 
 # ---------------------------------------------------------------------------
 # run_quiz (integration)

@@ -123,7 +123,7 @@ def fetch_questions(url: str, timeout: int = 10) -> list:
             raise ValueError(f"Each question must include required keys: {missing_keys}")
         if not isinstance(q["answer"], str):
             raise ValueError(
-                f"Question answers must be strings, got {type(q['answer']).__name__}."
+                f"Question answers must be strings, got {type(q['answer']).__name__}"
             )
         if q["answer"].upper() not in {"A", "B", "C", "D"}:
             raise ValueError("Question answers must be A, B, C, or D.")
