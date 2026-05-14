@@ -108,6 +108,19 @@ class TestGetPlayerName:
 # ---------------------------------------------------------------------------
 
 class TestFetchQuestions:
+    class MockResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return json.dumps(self.payload).encode("utf-8")
+
     def test_fetches_valid_question_bank(self):
         response = [
             {
@@ -119,31 +132,13 @@ class TestFetchQuestions:
             }
         ]
 
-        class MockResponse:
-            def __enter__(self):
-                return self
-
-            def __exit__(self, exc_type, exc, tb):
-                return False
-
-            def read(self):
-                return json.dumps(response).encode("utf-8")
-
-        with patch("pub_quiz.urllib.request.urlopen", return_value=MockResponse()):
+        with patch("pub_quiz.urllib.request.urlopen", return_value=self.MockResponse(response)):
             assert fetch_questions("https://example.com/questions.json") == response
 
     def test_raises_for_non_list_payload(self):
-        class MockResponse:
-            def __enter__(self):
-                return self
-
-            def __exit__(self, exc_type, exc, tb):
-                return False
-
-            def read(self):
-                return json.dumps({"bad": "payload"}).encode("utf-8")
-
-        with patch("pub_quiz.urllib.request.urlopen", return_value=MockResponse()):
+        with patch(
+            "pub_quiz.urllib.request.urlopen", return_value=self.MockResponse({"bad": "payload"})
+        ):
             with pytest.raises(ValueError, match="JSON list"):
                 fetch_questions("https://example.com/questions.json")
 

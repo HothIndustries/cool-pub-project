@@ -8,6 +8,7 @@ import textwrap
 import sys
 import json
 import urllib.request
+import urllib.error
 
 from questions import QUESTIONS
 
@@ -87,18 +88,27 @@ def score_message(score: int, total: int) -> str:
 
 def fetch_questions(url: str, timeout: int = 10) -> list:
     """Fetch a JSON question bank from an HTTP endpoint."""
-    with urllib.request.urlopen(url, timeout=timeout) as response:
-        payload = response.read().decode("utf-8")
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            payload = response.read().decode("utf-8")
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise ValueError(f"Could not fetch questions from URL: {url}") from exc
 
-    data = json.loads(payload)
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Question payload must be valid JSON.") from exc
+
     if not isinstance(data, list):
         raise ValueError("Question payload must be a JSON list.")
 
     for q in data:
         if not isinstance(q, dict):
             raise ValueError("Each question must be an object.")
-        if not QUESTION_KEYS.issubset(q.keys()):
-            raise ValueError("Each question must include all required keys.")
+        missing = QUESTION_KEYS - set(q.keys())
+        if missing:
+            missing_keys = ", ".join(sorted(missing))
+            raise ValueError(f"Each question must include required keys: {missing_keys}")
         if q["answer"].upper() not in {"A", "B", "C", "D"}:
             raise ValueError("Question answers must be A, B, C, or D.")
 
