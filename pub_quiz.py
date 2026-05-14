@@ -91,7 +91,7 @@ def fetch_questions(url: str, timeout: int = 10) -> list:
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
             payload = response.read().decode("utf-8")
-    except (urllib.error.URLError, TimeoutError) as exc:
+    except urllib.error.URLError as exc:
         raise ValueError(f"Could not fetch questions from URL: {url}") from exc
 
     try:
@@ -109,6 +109,8 @@ def fetch_questions(url: str, timeout: int = 10) -> list:
         if missing:
             missing_keys = ", ".join(sorted(missing))
             raise ValueError(f"Each question must include required keys: {missing_keys}")
+        if not isinstance(q["answer"], str):
+            raise ValueError("Question answers must be strings: A, B, C, or D.")
         if q["answer"].upper() not in {"A", "B", "C", "D"}:
             raise ValueError("Question answers must be A, B, C, or D.")
 
