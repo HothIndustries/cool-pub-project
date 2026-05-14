@@ -6,6 +6,8 @@ A fun CLI trivia game — grab a pint and test your knowledge.
 import random
 import textwrap
 import sys
+import json
+import urllib.request
 
 from questions import QUESTIONS
 
@@ -20,6 +22,7 @@ BANNER = r"""
 """
 
 DIVIDER = "─" * 52
+QUESTION_KEYS = {"category", "question", "choices", "answer", "fun_fact"}
 
 
 def print_banner() -> None:
@@ -82,7 +85,29 @@ def score_message(score: int, total: int) -> str:
     return "🍺 Better luck next time — maybe lay off the Guinness first..."
 
 
-def run_quiz(questions: list | None = None, num_questions: int = 6) -> dict:
+def fetch_questions(url: str, timeout: int = 10) -> list:
+    """Fetch a JSON question bank from an HTTP endpoint."""
+    with urllib.request.urlopen(url, timeout=timeout) as response:
+        payload = response.read().decode("utf-8")
+
+    data = json.loads(payload)
+    if not isinstance(data, list):
+        raise ValueError("Question payload must be a JSON list.")
+
+    for q in data:
+        if not isinstance(q, dict):
+            raise ValueError("Each question must be an object.")
+        if not QUESTION_KEYS.issubset(q.keys()):
+            raise ValueError("Each question must include all required keys.")
+        if q["answer"].upper() not in {"A", "B", "C", "D"}:
+            raise ValueError("Question answers must be A, B, C, or D.")
+
+    return data
+
+
+def run_quiz(
+    questions: list | None = None, num_questions: int = 6, questions_url: str | None = None
+) -> dict:
     """
     Run the full quiz game loop.
 
@@ -94,7 +119,7 @@ def run_quiz(questions: list | None = None, num_questions: int = 6) -> dict:
         A dict with keys ``name``, ``score``, and ``total``.
     """
     if questions is None:
-        questions = QUESTIONS
+        questions = fetch_questions(questions_url) if questions_url else QUESTIONS
 
     print_banner()
     name = get_player_name()

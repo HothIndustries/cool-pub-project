@@ -8,12 +8,21 @@ A fun, small Python CLI trivia game. Grab a virtual pint and test your knowledge
 - Random question selection every game — no two rounds are the same
 - Instant feedback with fun facts after each answer
 - Score summary with flavourful commentary at the end
+- Optional support for loading question banks from an HTTP JSON endpoint
 
 ## Requirements
 
 - Python 3.10+
 
 No third-party libraries required — uses the standard library only.
+
+### Optional: load questions from a URL
+
+```python
+from pub_quiz import run_quiz
+
+run_quiz(questions_url="https://example.com/questions.json")
+```
 
 ## Running the game
 

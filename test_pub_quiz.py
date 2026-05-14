@@ -1,11 +1,12 @@
 """Tests for the Pub Quiz game logic."""
 
 import sys
+import json
 from unittest.mock import patch
 
 import pytest
 
-from pub_quiz import ask_question, get_player_name, score_message, run_quiz
+from pub_quiz import ask_question, fetch_questions, get_player_name, score_message, run_quiz
 from questions import QUESTIONS
 
 # ---------------------------------------------------------------------------
@@ -103,6 +104,51 @@ class TestGetPlayerName:
 
 
 # ---------------------------------------------------------------------------
+# fetch_questions
+# ---------------------------------------------------------------------------
+
+class TestFetchQuestions:
+    def test_fetches_valid_question_bank(self):
+        response = [
+            {
+                "category": "Science",
+                "question": "What is H2O?",
+                "choices": ["A) Salt", "B) Water", "C) Gold", "D) Iron"],
+                "answer": "B",
+                "fun_fact": "Water covers around 71% of Earth's surface.",
+            }
+        ]
+
+        class MockResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return json.dumps(response).encode("utf-8")
+
+        with patch("pub_quiz.urllib.request.urlopen", return_value=MockResponse()):
+            assert fetch_questions("https://example.com/questions.json") == response
+
+    def test_raises_for_non_list_payload(self):
+        class MockResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return json.dumps({"bad": "payload"}).encode("utf-8")
+
+        with patch("pub_quiz.urllib.request.urlopen", return_value=MockResponse()):
+            with pytest.raises(ValueError, match="JSON list"):
+                fetch_questions("https://example.com/questions.json")
+
+
+# ---------------------------------------------------------------------------
 # run_quiz (integration)
 # ---------------------------------------------------------------------------
 
@@ -131,6 +177,16 @@ class TestRunQuiz:
         inputs = self._make_inputs("Sam", ["C"])
         with patch("builtins.input", side_effect=inputs):
             result = run_quiz(questions=questions, num_questions=999)
+        assert result["total"] == 1
+
+    def test_can_use_questions_url(self):
+        questions = [SAMPLE_QUESTION]
+        inputs = self._make_inputs("Rae", ["C"])
+        with patch("pub_quiz.fetch_questions", return_value=questions):
+            with patch("builtins.input", side_effect=inputs):
+                result = run_quiz(questions_url="https://example.com/questions.json", num_questions=1)
+        assert result["name"] == "Rae"
+        assert result["score"] == 1
         assert result["total"] == 1
 
     def test_question_bank_is_not_empty(self):
