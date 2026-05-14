@@ -126,7 +126,7 @@ def fetch_questions(url: str, timeout: int = 10) -> list:
                 f"Question answers must be strings, got {type(q['answer']).__name__}"
             )
         if q["answer"].upper() not in {"A", "B", "C", "D"}:
-            raise ValueError("Question answers must be A, B, C, or D.")
+            raise ValueError("Question answers must be A, B, C, or D (case-insensitive).")
 
     return data
 
