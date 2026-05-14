@@ -87,7 +87,19 @@ def score_message(score: int, total: int) -> str:
 
 
 def fetch_questions(url: str, timeout: int = 10) -> list:
-    """Fetch a JSON question bank from an HTTP endpoint."""
+    """
+    Fetch a JSON question bank from an HTTP endpoint.
+
+    Args:
+        url: URL of the JSON payload.
+        timeout: Request timeout in seconds.
+
+    Returns:
+        A list of question dicts.
+
+    Raises:
+        ValueError: If the request fails or payload is invalid.
+    """
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
             payload = response.read().decode("utf-8")
@@ -110,7 +122,9 @@ def fetch_questions(url: str, timeout: int = 10) -> list:
             missing_keys = ", ".join(sorted(missing))
             raise ValueError(f"Each question must include required keys: {missing_keys}")
         if not isinstance(q["answer"], str):
-            raise ValueError("Question answers must be strings: A, B, C, or D.")
+            raise ValueError(
+                f"Question answers must be strings, got {type(q['answer']).__name__}."
+            )
         if q["answer"].upper() not in {"A", "B", "C", "D"}:
             raise ValueError("Question answers must be A, B, C, or D.")
 
