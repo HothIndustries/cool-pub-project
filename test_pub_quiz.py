@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pub_quiz import ask_question, get_player_name, score_message, run_quiz
+from pub_quiz import ask_question, get_player_name, make_request, score_message, run_quiz
 from questions import QUESTIONS
 
 # ---------------------------------------------------------------------------
@@ -100,6 +100,37 @@ class TestGetPlayerName:
     def test_whitespace_input_returns_default(self):
         with patch("builtins.input", return_value="   "):
             assert get_player_name() == "Mystery Drinker"
+
+
+# ---------------------------------------------------------------------------
+# make_request
+# ---------------------------------------------------------------------------
+
+class TestMakeRequest:
+    def test_returns_json_response_when_available(self):
+        with patch("pub_quiz.requests.get") as mock_get:
+            mock_response = mock_get.return_value
+            mock_response.raise_for_status.return_value = None
+            mock_response.json.return_value = {"ok": True}
+            result = make_request("https://example.com/api")
+
+        assert result == {"ok": True}
+        mock_response.raise_for_status.assert_called_once()
+
+    def test_falls_back_to_text_when_json_is_not_available(self):
+        with patch("pub_quiz.requests.get") as mock_get:
+            mock_response = mock_get.return_value
+            mock_response.raise_for_status.return_value = None
+            mock_response.json.side_effect = ValueError("not json")
+            mock_response.text = "plain text"
+            result = make_request("https://example.com/text")
+
+        assert result == "plain text"
+
+    def test_raises_helpful_error_when_requests_is_missing(self, monkeypatch):
+        monkeypatch.setattr("pub_quiz.requests", None)
+        with pytest.raises(RuntimeError, match="pip install requests"):
+            make_request("https://example.com")
 
 
 # ---------------------------------------------------------------------------

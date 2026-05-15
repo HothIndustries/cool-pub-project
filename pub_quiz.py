@@ -6,6 +6,12 @@ A fun CLI trivia game — grab a pint and test your knowledge.
 import random
 import textwrap
 import sys
+from typing import Any
+
+try:
+    import requests
+except ImportError:  # pragma: no cover - exercised via runtime guard
+    requests = None
 
 from questions import QUESTIONS
 
@@ -20,6 +26,19 @@ BANNER = r"""
 """
 
 DIVIDER = "─" * 52
+
+
+def make_request(url: str, timeout: float = 10.0) -> Any:
+    """Make an HTTP GET request and return JSON if available, otherwise text."""
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required. Install it with: pip install requests")
+
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+    try:
+        return response.json()
+    except ValueError:
+        return response.text
 
 
 def print_banner() -> None:
