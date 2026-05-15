@@ -4,8 +4,9 @@ import sys
 from unittest.mock import patch
 
 import pytest
+import requests
 
-from pub_quiz import ask_question, get_player_name, make_request, requests, score_message, run_quiz
+from pub_quiz import ask_question, get_player_name, make_request, score_message, run_quiz
 from questions import QUESTIONS
 
 # ---------------------------------------------------------------------------

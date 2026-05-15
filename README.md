@@ -13,7 +13,7 @@ A fun, small Python CLI trivia game. Grab a virtual pint and test your knowledge
 ## Requirements
 
 - Python 3.10+
-- requests (required for the HTTP request helper feature)
+- requests (optional; needed for the HTTP request helper feature)
 
 Install dependencies with:
 
