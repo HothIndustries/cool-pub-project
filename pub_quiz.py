@@ -29,7 +29,7 @@ BANNER = r"""
 DIVIDER = "─" * 52
 
 
-def make_request(url: str, timeout: float = 10.0) -> Any:
+def make_request(url: str, timeout: float = 10.0) -> dict[str, Any] | str:
     """Make an HTTP GET request and return JSON if available, otherwise text."""
     if requests is None:
         raise RuntimeError("The 'requests' package is required. Install it with: pip install requests")
@@ -42,7 +42,7 @@ def make_request(url: str, timeout: float = 10.0) -> Any:
     response.raise_for_status()
     try:
         return response.json()
-    except ValueError:
+    except requests.exceptions.JSONDecodeError:
         return response.text
 
 

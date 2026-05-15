@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pub_quiz import ask_question, get_player_name, make_request, score_message, run_quiz
+from pub_quiz import ask_question, get_player_name, make_request, requests, score_message, run_quiz
 from questions import QUESTIONS
 
 # ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ class TestMakeRequest:
         with patch("pub_quiz.requests.get") as mock_get:
             mock_response = mock_get.return_value
             mock_response.raise_for_status.return_value = None
-            mock_response.json.side_effect = ValueError("not json")
+            mock_response.json.side_effect = requests.exceptions.JSONDecodeError("not json", "x", 0)
             mock_response.text = "plain text"
             result = make_request("https://example.com/text")
 
@@ -137,6 +137,11 @@ class TestMakeRequest:
     def test_raises_for_non_http_url(self):
         with pytest.raises(ValueError, match="absolute http\\(s\\) URL"):
             make_request("file:///etc/hosts")
+
+    def test_propagates_request_errors(self):
+        with patch("pub_quiz.requests.get", side_effect=requests.exceptions.Timeout):
+            with pytest.raises(requests.exceptions.Timeout):
+                make_request("https://example.com/api")
 
 
 # ---------------------------------------------------------------------------
