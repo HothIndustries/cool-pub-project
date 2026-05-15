@@ -7,6 +7,7 @@ import random
 import textwrap
 import sys
 from typing import Any
+from urllib.parse import urlparse
 
 try:
     import requests
@@ -32,6 +33,10 @@ def make_request(url: str, timeout: float = 10.0) -> Any:
     """Make an HTTP GET request and return JSON if available, otherwise text."""
     if requests is None:
         raise RuntimeError("The 'requests' package is required. Install it with: pip install requests")
+
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("URL must be an absolute http(s) URL")
 
     response = requests.get(url, timeout=timeout)
     response.raise_for_status()
