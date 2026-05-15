@@ -8,12 +8,18 @@ A fun, small Python CLI trivia game. Grab a virtual pint and test your knowledge
 - Random question selection every game — no two rounds are the same
 - Instant feedback with fun facts after each answer
 - Score summary with flavourful commentary at the end
+- HTTP request helper for fetching data from web APIs
 
 ## Requirements
 
 - Python 3.10+
+- requests (optional; needed for the HTTP request helper feature)
 
-No third-party libraries required — uses the standard library only.
+Install dependencies with:
+
+```bash
+pip install requests
+```
 
 ## Running the game
 

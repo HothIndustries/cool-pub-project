@@ -6,6 +6,13 @@ A fun CLI trivia game — grab a pint and test your knowledge.
 import random
 import textwrap
 import sys
+from typing import Any
+from urllib.parse import urlparse
+
+try:
+    import requests
+except ImportError:  # pragma: no cover - exercised via runtime guard
+    requests = None
 
 from questions import QUESTIONS
 
@@ -20,6 +27,23 @@ BANNER = r"""
 """
 
 DIVIDER = "─" * 52
+
+
+def make_request(url: str, timeout: float = 10.0) -> dict[str, Any] | str:
+    """Make an HTTP GET request and return JSON if available, otherwise text."""
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required. Install it with: pip install requests")
+
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("URL must be an absolute http(s) URL")
+
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+    try:
+        return response.json()
+    except requests.exceptions.JSONDecodeError:
+        return response.text
 
 
 def print_banner() -> None:

@@ -4,8 +4,9 @@ import sys
 from unittest.mock import patch
 
 import pytest
+import requests
 
-from pub_quiz import ask_question, get_player_name, score_message, run_quiz
+from pub_quiz import ask_question, get_player_name, make_request, score_message, run_quiz
 from questions import QUESTIONS
 
 # ---------------------------------------------------------------------------
@@ -100,6 +101,48 @@ class TestGetPlayerName:
     def test_whitespace_input_returns_default(self):
         with patch("builtins.input", return_value="   "):
             assert get_player_name() == "Mystery Drinker"
+
+
+# ---------------------------------------------------------------------------
+# make_request
+# ---------------------------------------------------------------------------
+
+class TestMakeRequest:
+    def test_returns_json_response_when_available(self):
+        with patch("pub_quiz.requests.get") as mock_get:
+            mock_response = mock_get.return_value
+            mock_response.raise_for_status.return_value = None
+            mock_response.json.return_value = {"ok": True}
+            result = make_request("https://example.com/api")
+
+        assert result == {"ok": True}
+        mock_get.assert_called_once_with("https://example.com/api", timeout=10.0)
+        mock_response.raise_for_status.assert_called_once()
+
+    def test_falls_back_to_text_when_json_is_not_available(self):
+        with patch("pub_quiz.requests.get") as mock_get:
+            mock_response = mock_get.return_value
+            mock_response.raise_for_status.return_value = None
+            mock_response.json.side_effect = requests.exceptions.JSONDecodeError("not json", "x", 0)
+            mock_response.text = "plain text"
+            result = make_request("https://example.com/text")
+
+        assert result == "plain text"
+        mock_response.json.assert_called_once()
+
+    def test_raises_helpful_error_when_requests_is_missing(self, monkeypatch):
+        monkeypatch.setattr("pub_quiz.requests", None)
+        with pytest.raises(RuntimeError, match="pip install requests"):
+            make_request("https://example.com")
+
+    def test_raises_for_non_http_url(self):
+        with pytest.raises(ValueError, match="absolute http\\(s\\) URL"):
+            make_request("file:///etc/hosts")
+
+    def test_propagates_request_errors(self):
+        with patch("pub_quiz.requests.get", side_effect=requests.exceptions.Timeout):
+            with pytest.raises(requests.exceptions.Timeout):
+                make_request("https://example.com/api")
 
 
 # ---------------------------------------------------------------------------
